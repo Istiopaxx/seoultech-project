@@ -4,7 +4,7 @@
 COMMIT_MSG_FILE="$(cat $1)"
 REGEXP="\[#[0-9]+\]"
 
-check() {
+check () {
   if [[ ! $COMMIT_MSG_FILE =~ $REGEXP ]]; then
     echo "Not permitted commit message convention"
     echo "Write valid issue number in commit message"
