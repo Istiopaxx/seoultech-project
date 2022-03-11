@@ -1,0 +1,11 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+COMMIT_MSG_FILE=$1
+
+branch_name=`git rev-parse --abbrev-ref HEAD`
+issue_number=`echo ${branch_name} | cut -d '-' -f1`
+task_type=`echo ${branch_name} | cut -d '-' -f2 | cut -d '/' -f1`
+
+echo "$task_type:    [#$issue_number] $(cat $COMMIT_MSG_FILE)" > $COMMIT_MSG_FILE
+
