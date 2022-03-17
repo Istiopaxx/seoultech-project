@@ -3,7 +3,8 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from 'src/schemas/user.schema';
+import { User } from './schemas/user.schema';
+import { UserRepository } from './user.repository';
 
 describe('UserController', () => {
   let controller: UserController;
@@ -12,7 +13,13 @@ describe('UserController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [UserService],
+      providers: [
+        UserService,
+        {
+          provide: UserRepository,
+          useFactory: () => 1,
+        },
+      ],
     }).compile();
 
     controller = module.get<UserController>(UserController);
@@ -25,7 +32,7 @@ describe('UserController', () => {
 
   describe('create', () => {
     it('should return a user', async () => {
-      const result: Promise<User> = Promise.resolve({
+      const result: User = {
         first_name: 'John',
         last_name: 'Doe',
         email: 'abc@email.com',
@@ -34,7 +41,7 @@ describe('UserController', () => {
         address: 'Korea',
         city: 'Seoul',
         gender: 'male',
-      });
+      };
       const createUserDto: CreateUserDto = {
         first_name: 'John',
         last_name: 'Doe',
@@ -45,7 +52,9 @@ describe('UserController', () => {
         city: 'Seoul',
         gender: 'male',
       };
-      jest.spyOn(service, 'create').mockImplementation(() => result);
+      jest
+        .spyOn(service, 'create')
+        .mockImplementation(() => Promise.resolve(result));
       expect(await controller.create(createUserDto)).toBe(result);
     });
   });

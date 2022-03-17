@@ -3,12 +3,13 @@ import { Test } from '@nestjs/testing';
 import { UserModule } from '../src/user/user.module';
 import { INestApplication } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
-import { UserDocument, User } from '../src/schemas/user.schema';
+import { UserDocument, User } from '../src/user/schemas/user.schema';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 describe('User', () => {
   let app: INestApplication;
   let userModel;
-  const userData: User = {
+  const userData: CreateUserDto = {
     first_name: 'John',
     last_name: 'Doe',
     email: 'abc@email.com',
@@ -37,18 +38,6 @@ describe('User', () => {
   });
 
   afterEach(async () => await userModel.deleteMany({}).exec());
-
-  it(`POST /user`, async () => {
-    const res = await request(app.getHttpServer())
-      .post('/user')
-      .send(userData)
-      .expect(201);
-    expect(res.body).toEqual({
-      ...userData,
-      password: undefined,
-      _id: expect.any(String),
-    });
-  });
 
   it(`POST /user`, async () => {
     const res = await request(app.getHttpServer())
