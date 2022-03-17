@@ -3,9 +3,8 @@ import { Test } from '@nestjs/testing';
 import { UserModule } from '../src/user/user.module';
 import { INestApplication } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
-import { UserDocument, User } from '../src/user/entities/user.entity';
+import { UserDocument } from '../src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { UserRepository } from 'src/user/user.repository';
 
 describe('User', () => {
   let app: INestApplication;
@@ -50,6 +49,12 @@ describe('User', () => {
         ...userData,
         password: undefined,
         _id: expect.any(String),
+      });
+      const insertedUser = await userModel.findOne({ _id: res.body._id });
+      expect(insertedUser).toMatchObject({
+        ...userData,
+        password: insertedUser.password,
+        _id: expect.anything(),
       });
     });
 
