@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateUserDto } from './dto/create-user.dto';
-import { User } from './schemas/user.schema';
+import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
+import { User } from './entities/user.entity';
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 
@@ -20,6 +20,11 @@ describe('UserService', () => {
     gender: 'male',
   };
   const user: User = {
+    ...createUserDto,
+  };
+  const createUserResponse: CreateUserResponse = {
+    password: undefined,
+    _id: expect.anything(),
     ...createUserDto,
   };
 
@@ -48,34 +53,25 @@ describe('UserService', () => {
 
   describe('create', () => {
     it('should create a user', async () => {
-      jest.spyOn(repository, 'create').mockResolvedValue(Promise.resolve(user));
+      jest
+        .spyOn(repository, 'create')
+        .mockResolvedValue(Promise.resolve(createUserResponse));
       jest
         .spyOn(repository, 'findByEmail')
         .mockResolvedValue(Promise.resolve(null));
-      expect(await service.create(createUserDto)).toBe(user);
+      expect(await service.create(createUserDto)).toBe(createUserResponse);
     });
 
     it('should be reject when existing email', async () => {
-      jest.spyOn(repository, 'create').mockResolvedValue(Promise.resolve(user));
+      jest
+        .spyOn(repository, 'create')
+        .mockResolvedValue(Promise.resolve(createUserResponse));
       jest
         .spyOn(repository, 'findByEmail')
         .mockResolvedValue(Promise.resolve(user));
       expect(service.create(createUserDto)).rejects.toThrowError(
         BadRequestException,
       );
-    });
-
-    it('should be reject when password not hashed', async () => {
-      jest
-        .spyOn(repository, 'create')
-        .mockImplementation((dto) =>
-          Promise.resolve({ ...dto, _id: expect.anything() }),
-        );
-      jest
-        .spyOn(repository, 'findByEmail')
-        .mockResolvedValue(Promise.resolve(null));
-      const ret = await service.create(createUserDto);
-      expect(ret.password).not.toBe(user.password);
     });
   });
 });

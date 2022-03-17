@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './schemas/user.schema';
+import { User } from './entities/user.entity';
 import { UserRepository } from './user.repository';
 
 describe('UserController', () => {
@@ -32,11 +32,11 @@ describe('UserController', () => {
 
   describe('create', () => {
     it('should return a user', async () => {
-      const result: User = {
+      const result: CreateUserResponse = {
+        _id: expect.anything(),
         first_name: 'John',
         last_name: 'Doe',
         email: 'abc@email.com',
-        password: 'abcd',
         phone: '01012341234',
         address: 'Korea',
         city: 'Seoul',

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { User } from './schemas/user.schema';
+import { User } from './entities/user.entity';
 import { UserRepository } from './user.repository';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -12,7 +12,7 @@ const salt = 5;
 export class UserService {
   constructor(private readonly userRepository: UserRepository) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<CreateUserResponse> {
     const existedUser = await this.userRepository.findByEmail(
       createUserDto.email,
     );

@@ -3,8 +3,9 @@ import { Test } from '@nestjs/testing';
 import { UserModule } from '../src/user/user.module';
 import { INestApplication } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
-import { UserDocument, User } from '../src/user/schemas/user.schema';
+import { UserDocument, User } from '../src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { UserRepository } from 'src/user/user.repository';
 
 describe('User', () => {
   let app: INestApplication;
@@ -39,15 +40,26 @@ describe('User', () => {
 
   afterEach(async () => await userModel.deleteMany({}).exec());
 
-  it(`POST /user`, async () => {
-    const res = await request(app.getHttpServer())
-      .post('/user')
-      .send(userData)
-      .expect(201);
-    expect(res.body).toEqual({
-      ...userData,
-      password: undefined,
-      _id: expect.any(String),
+  describe('user create', () => {
+    it('user should created well', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/user')
+        .send(userData)
+        .expect(201);
+      expect(res.body).toEqual({
+        ...userData,
+        password: undefined,
+        _id: expect.any(String),
+      });
+    });
+
+    it('user password should be hashed', async () => {
+      const rest = await request(app.getHttpServer())
+        .post('/user')
+        .send(userData)
+        .expect(201);
+      const user = await userModel.findById(rest.body._id);
+      expect(user.password).not.toEqual(userData.password);
     });
   });
 });

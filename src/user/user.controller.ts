@@ -1,15 +1,41 @@
-import { Controller, Get, Post, Body, Patch, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './schemas/user.schema';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('User')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  /*
+   * Create a User
+   */
+  @ApiCreatedResponse({
+    description: 'The record has been successfully created.',
+    type: CreateUserResponse,
+  })
+  @ApiBadRequestResponse({
+    description: 'Email duplicated.',
+    type: BadRequestException,
+  })
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  async create(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<CreateUserResponse> {
     return this.userService.create(createUserDto);
   }
 

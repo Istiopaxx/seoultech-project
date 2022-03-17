@@ -25,3 +25,21 @@ export class CreateUserDto {
   @IsString()
   gender: string;
 }
+
+export class CreateUserResponse {
+  _id: string;
+
+  first_name: string;
+
+  last_name: string;
+
+  email: string;
+
+  phone: string;
+
+  address: string;
+
+  city: string;
+
+  gender: string;
+}
