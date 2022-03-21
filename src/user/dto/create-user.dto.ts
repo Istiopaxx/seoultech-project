@@ -1,4 +1,5 @@
 import { IsString, IsEmail } from 'class-validator';
+import { CreateTokenResponse } from 'src/auth/dto/create-token.dto';
 
 export class CreateUserDto {
   @IsString()
@@ -26,7 +27,7 @@ export class CreateUserDto {
   gender: string;
 }
 
-export class CreateUserResponse {
+export class CreateUser {
   _id: string;
 
   first_name: string;
@@ -42,4 +43,10 @@ export class CreateUserResponse {
   city: string;
 
   gender: string;
+}
+
+export class CreateUserResponse {
+  user: CreateUser;
+
+  token: CreateTokenResponse;
 }

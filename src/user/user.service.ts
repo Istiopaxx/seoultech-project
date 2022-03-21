@@ -4,13 +4,17 @@ import { UserRepository } from './user.repository';
 import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from 'src/auth/auth.service';
 
 // move to config
 const salt = 5;
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private userRepository: UserRepository,
+    private authService: AuthService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<CreateUserResponse> {
     const existedUser = await this.userRepository.findByEmail(
@@ -21,7 +25,12 @@ export class UserService {
     }
     const hash = await bcrypt.hash(createUserDto.password, salt);
     createUserDto.password = hash;
-    return this.userRepository.create(createUserDto);
+    const user = await this.userRepository.create(createUserDto);
+    const token = await this.authService.login(user);
+    return {
+      user,
+      token,
+    };
   }
 
   async findAll(): Promise<User[]> {
