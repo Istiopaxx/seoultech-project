@@ -1,10 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
-import { User } from './entities/user.entity';
+import {
+  CreateUser,
+  CreateUserDto,
+  CreateUserResponse,
+} from './dto/create-user.dto';
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
+import { AuthService } from 'src/auth/auth.service';
 
 describe('UserService', () => {
   let service: UserService;
@@ -19,31 +22,41 @@ describe('UserService', () => {
     city: 'Seoul',
     gender: 'male',
   };
-  const user: User = {
-    ...createUserDto,
-  };
-  const createUserResponse: CreateUserResponse = {
+  const user: CreateUser = {
     password: undefined,
     _id: expect.anything(),
     ...createUserDto,
   };
+  const token = {
+    access_token: expect.anything(),
+  };
+  const createUserResponse: CreateUserResponse = {
+    user,
+    token,
+  };
+
+  const MockUserRepository = {
+    provide: UserRepository,
+    useFactory: () => ({
+      create: jest.fn(() => Promise.resolve(user)),
+      findByEmail: jest.fn(() => Promise.resolve(createUserDto)),
+    }),
+  };
+
+  const MockAuthService = {
+    provide: AuthService,
+    useFactory: () => ({
+      login: jest.fn(() => Promise.resolve(token)),
+    }),
+  };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UserService,
-        UserRepository,
-        {
-          provide: getModelToken(User.name),
-          useFactory: () => {
-            return 1;
-          },
-        },
-      ],
+    const userModule: TestingModule = await Test.createTestingModule({
+      providers: [UserService, MockUserRepository, MockAuthService],
     }).compile();
 
-    service = module.get<UserService>(UserService);
-    repository = module.get<UserRepository>(UserRepository);
+    service = userModule.get<UserService>(UserService);
+    repository = userModule.get<UserRepository>(UserRepository);
   });
 
   it('should be defined', () => {
@@ -54,21 +67,14 @@ describe('UserService', () => {
   describe('create', () => {
     it('should create a user', async () => {
       jest
-        .spyOn(repository, 'create')
-        .mockResolvedValue(Promise.resolve(createUserResponse));
-      jest
         .spyOn(repository, 'findByEmail')
         .mockResolvedValue(Promise.resolve(null));
-      expect(await service.create(createUserDto)).toBe(createUserResponse);
+      expect(await service.create(createUserDto)).toStrictEqual(
+        createUserResponse,
+      );
     });
 
     it('should be reject when existing email', async () => {
-      jest
-        .spyOn(repository, 'create')
-        .mockResolvedValue(Promise.resolve(createUserResponse));
-      jest
-        .spyOn(repository, 'findByEmail')
-        .mockResolvedValue(Promise.resolve(user));
       expect(service.create(createUserDto)).rejects.toThrowError(
         BadRequestException,
       );

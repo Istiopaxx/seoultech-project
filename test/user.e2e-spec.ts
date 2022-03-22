@@ -1,10 +1,11 @@
 import * as request from 'supertest';
 import { Test } from '@nestjs/testing';
-import { UserModule } from '../src/user/user.module';
+import { UserModule } from 'src/user/user.module';
 import { INestApplication } from '@nestjs/common';
 import { MongooseModule, getModelToken } from '@nestjs/mongoose';
-import { UserDocument } from '../src/user/entities/user.entity';
+import { UserDocument } from 'src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { AuthModule } from 'src/auth/auth.module';
 
 describe('User', () => {
   let app: INestApplication;
@@ -24,6 +25,7 @@ describe('User', () => {
     const module = await Test.createTestingModule({
       imports: [
         UserModule,
+        AuthModule,
         MongooseModule.forRoot('mongodb://localhost:27017/seoultech-test'),
       ],
     }).compile();
@@ -46,11 +48,14 @@ describe('User', () => {
         .send(userData)
         .expect(201);
       expect(res.body).toEqual({
-        ...userData,
-        password: undefined,
-        _id: expect.any(String),
+        user: {
+          ...userData,
+          password: undefined,
+          _id: expect.anything(),
+        },
+        token: expect.anything(),
       });
-      const insertedUser = await userModel.findOne({ _id: res.body._id });
+      const insertedUser = await userModel.findOne({ _id: res.body.user._id });
       expect(insertedUser).toMatchObject({
         ...userData,
         password: insertedUser.password,
@@ -59,11 +64,11 @@ describe('User', () => {
     });
 
     it('user password should be hashed', async () => {
-      const rest = await request(app.getHttpServer())
+      const res = await request(app.getHttpServer())
         .post('/user')
         .send(userData)
         .expect(201);
-      const user = await userModel.findById(rest.body._id);
+      const user = await userModel.findById(res.body.user._id);
       expect(user.password).not.toEqual(userData.password);
     });
   });

@@ -1,4 +1,11 @@
-import { Controller, Request, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Request,
+  Post,
+  UseGuards,
+  HttpStatus,
+  HttpCode,
+} from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { CreateTokenDto, CreateTokenResponse } from './dto/create-token.dto';
@@ -18,6 +25,7 @@ export class AuthController {
     type: CreateTokenResponse,
   })
   @UseGuards(LocalAuthGuard)
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(@Request() req) {
     return this.authService.login(req.user);

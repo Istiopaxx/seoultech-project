@@ -15,15 +15,15 @@ export class UserRepository {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+    return this.userModel.find().lean().exec();
   }
 
   async findByEmail(email: string): Promise<User> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email }).lean().exec();
   }
 
   async findOne(id: string): Promise<User> {
-    return this.userModel.findOne({ _id: id }).exec();
+    return this.userModel.findOne({ _id: id }).lean().exec();
   }
 
   async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {

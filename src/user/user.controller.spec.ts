@@ -1,23 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
-import { UserRepository } from './user.repository';
+import { CreateUserDto } from './dto/create-user.dto';
 
 describe('UserController', () => {
   let controller: UserController;
   let service: UserService;
 
+  const MockUserService = {
+    provide: UserService,
+    useFactory: () => ({
+      create: jest.fn(() => Promise.resolve()),
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
-      providers: [
-        UserService,
-        {
-          provide: UserRepository,
-          useFactory: () => 1,
-        },
-      ],
+      providers: [MockUserService],
     }).compile();
 
     controller = module.get<UserController>(UserController);
@@ -28,32 +28,10 @@ describe('UserController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('create', () => {
-    it('should return a user', async () => {
-      const result: CreateUserResponse = {
-        _id: expect.anything(),
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'abc@email.com',
-        phone: '01012341234',
-        address: 'Korea',
-        city: 'Seoul',
-        gender: 'male',
-      };
-      const createUserDto: CreateUserDto = {
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'abc@email.com',
-        password: 'abcd',
-        phone: '01012341234',
-        address: 'Korea',
-        city: 'Seoul',
-        gender: 'male',
-      };
-      jest
-        .spyOn(service, 'create')
-        .mockImplementation(() => Promise.resolve(result));
-      expect(await controller.create(createUserDto)).toBe(result);
-    });
+  it('create should call service.create', async () => {
+    const dto = new CreateUserDto();
+    await controller.create(dto);
+    expect(service.create).toHaveBeenCalled();
+    expect(service.create).toHaveBeenCalledWith(dto);
   });
 });
