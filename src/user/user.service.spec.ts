@@ -8,6 +8,7 @@ import {
 import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 import { AuthService } from 'src/auth/auth.service';
+import { ConfigModule } from '@nestjs/config';
 
 describe('UserService', () => {
   let service: UserService;
@@ -52,6 +53,12 @@ describe('UserService', () => {
 
   beforeEach(async () => {
     const userModule: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          envFilePath: '.env.develop',
+          isGlobal: true,
+        }),
+      ],
       providers: [UserService, MockUserRepository, MockAuthService],
     }).compile();
 

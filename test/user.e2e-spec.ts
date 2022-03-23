@@ -6,6 +6,7 @@ import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { UserDocument } from 'src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { AuthModule } from 'src/auth/auth.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 describe('User', () => {
   let app: INestApplication;
@@ -24,9 +25,19 @@ describe('User', () => {
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       imports: [
+        ConfigModule.forRoot({
+          envFilePath: '.env.test',
+          isGlobal: true,
+        }),
         UserModule,
         AuthModule,
-        MongooseModule.forRoot('mongodb://localhost:27017/seoultech-test'),
+        MongooseModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: async (configService: ConfigService) => ({
+            uri: configService.get<string>('DATABASE_URI'),
+          }),
+          inject: [ConfigService],
+        }),
       ],
     }).compile();
 

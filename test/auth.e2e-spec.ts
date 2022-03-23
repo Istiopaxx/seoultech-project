@@ -7,6 +7,7 @@ import { getModelToken, MongooseModule } from '@nestjs/mongoose';
 import { UserDocument } from 'src/user/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 describe('Auth', () => {
   let app: INestApplication;
@@ -31,9 +32,19 @@ describe('Auth', () => {
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       imports: [
+        ConfigModule.forRoot({
+          envFilePath: '.env.test',
+          isGlobal: true,
+        }),
         AuthModule,
         UserModule,
-        MongooseModule.forRoot('mongodb://localhost:27017/seoultech-test'),
+        MongooseModule.forRootAsync({
+          imports: [ConfigModule],
+          useFactory: async (configService: ConfigService) => ({
+            uri: configService.get<string>('DATABASE_URI'),
+          }),
+          inject: [ConfigService],
+        }),
       ],
     }).compile();
 

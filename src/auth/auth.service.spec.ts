@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserRepository } from 'src/user/user.repository';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
+import { ConfigModule } from '@nestjs/config';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -34,6 +35,12 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [
+        ConfigModule.forRoot({
+          envFilePath: '.env.develop',
+          isGlobal: true,
+        }),
+      ],
       providers: [AuthService, MockUserRepository, MockJwtService],
     }).compile();
 

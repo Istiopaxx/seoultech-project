@@ -5,15 +5,14 @@ import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from 'src/auth/auth.service';
-
-// move to config
-const salt = 5;
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
   constructor(
     private userRepository: UserRepository,
     private authService: AuthService,
+    private configService: ConfigService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<CreateUserResponse> {
@@ -23,8 +22,10 @@ export class UserService {
     if (existedUser) {
       throw new BadRequestException();
     }
-    const hash = await bcrypt.hash(createUserDto.password, salt);
-    createUserDto.password = hash;
+    createUserDto.password = await bcrypt.hash(
+      createUserDto.password,
+      parseInt(this.configService.get('HASHING_SALT_OF_ROUND')),
+    );
     const user = await this.userRepository.create(createUserDto);
     const token = await this.authService.login(user);
     return {
