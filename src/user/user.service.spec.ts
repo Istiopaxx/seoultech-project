@@ -9,6 +9,7 @@ import { UserRepository } from './user.repository';
 import { UserService } from './user.service';
 import { AuthService } from 'src/auth/auth.service';
 import { ConfigModule } from '@nestjs/config';
+import { CreateTokenResponse } from 'src/auth/dto/create-token.dto';
 
 describe('UserService', () => {
   let service: UserService;
@@ -28,8 +29,9 @@ describe('UserService', () => {
     _id: expect.anything(),
     ...createUserDto,
   };
-  const token = {
+  const token: CreateTokenResponse = {
     access_token: expect.anything(),
+    refresh_token: expect.anything(),
   };
   const createUserResponse: CreateUserResponse = {
     user,

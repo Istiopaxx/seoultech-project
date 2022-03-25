@@ -11,6 +11,8 @@ describe('AuthController', () => {
     provide: AuthService,
     useFactory: () => ({
       login: jest.fn(() => Promise.resolve()),
+      refresh: jest.fn(() => Promise.resolve()),
+      logout: jest.fn(() => Promise.resolve()),
     }),
   };
 
@@ -32,5 +34,17 @@ describe('AuthController', () => {
     const user = new User();
     await controller.login({ user });
     expect(service.login).toBeCalledWith(user);
+  });
+
+  it('refresh should call service.refresh', async () => {
+    const user = new User();
+    await controller.refresh({ user, uuid: expect.anything() });
+    expect(service.refresh).toBeCalledWith(user);
+  });
+
+  it('logout should call service.logout', async () => {
+    const user = new User();
+    await controller.logout({ user, uuid: expect.anything() });
+    expect(service.logout).toBeCalledWith(user);
   });
 });

@@ -4,9 +4,12 @@ import { UserRepository } from 'src/user/user.repository';
 import { AuthService } from './auth.service';
 import * as bcrypt from 'bcrypt';
 import { ConfigModule } from '@nestjs/config';
+import { AuthRepository } from './auth.repository';
+import { CreateTokenResponse } from './dto/create-token.dto';
 
 describe('AuthService', () => {
   let service: AuthService;
+  let repository: AuthRepository;
   let jwtService: JwtService;
 
   const user = {
@@ -26,6 +29,14 @@ describe('AuthService', () => {
     }),
   };
 
+  const MockAuthRepository = {
+    provide: AuthRepository,
+    useFactory: () => ({
+      saveToken: jest.fn(() => Promise.resolve(null)),
+      deleteToken: jest.fn(() => Promise.resolve(null)),
+    }),
+  };
+
   const MockJwtService = {
     provide: JwtService,
     useFactory: () => ({
@@ -41,10 +52,16 @@ describe('AuthService', () => {
           isGlobal: true,
         }),
       ],
-      providers: [AuthService, MockUserRepository, MockJwtService],
+      providers: [
+        AuthService,
+        MockUserRepository,
+        MockAuthRepository,
+        MockJwtService,
+      ],
     }).compile();
 
     service = module.get<AuthService>(AuthService);
+    repository = module.get<AuthRepository>(AuthRepository);
     jwtService = module.get<JwtService>(JwtService);
   });
 
@@ -64,10 +81,32 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should return valid jwt token', async () => {
       expect(await service.login(user)).toBeTruthy();
-      expect(jwtService.sign).toBeCalledWith({
-        email: user.email,
-        sub: user._id,
-      });
+      expect(jwtService.sign).toBeCalled();
+      expect(repository.saveToken).toBeCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.any(Number),
+      );
+    });
+  });
+
+  describe('refresh', () => {
+    it('should return valid jwt token', async () => {
+      jest
+        .spyOn(service, 'login')
+        .mockResolvedValue(Promise.resolve(new CreateTokenResponse()));
+      expect(
+        await service.refresh({ ...user, uuid: expect.anything() }),
+      ).toBeTruthy();
+      expect(repository.deleteToken).toBeCalled();
+      expect(service.login).toBeCalled();
+    });
+  });
+
+  describe('logout', () => {
+    it('should delete refresh token', async () => {
+      await service.logout({ ...user, uuid: expect.anything() });
+      expect(repository.deleteToken).toBeCalled();
     });
   });
 });

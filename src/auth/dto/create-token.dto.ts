@@ -8,6 +8,12 @@ export class CreateTokenDto {
   password: string;
 }
 
+export class RefreshTokenDto {
+  @IsString()
+  refresh_token: string;
+}
+
 export class CreateTokenResponse {
   access_token: string;
+  refresh_token: string;
 }

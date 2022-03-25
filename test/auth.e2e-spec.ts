@@ -6,13 +6,16 @@ import { INestApplication } from '@nestjs/common';
 import { getModelToken, MongooseModule } from '@nestjs/mongoose';
 import { UserDocument } from 'src/user/entities/user.entity';
 import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthRepository } from 'src/auth/auth.repository';
+import { JwtService } from '@nestjs/jwt';
 
 describe('Auth', () => {
   let app: INestApplication;
   let userModel;
+  let authRepository: AuthRepository;
   let jwtService: JwtService;
+  let hashedUser;
 
   const authCredentials = {
     email: 'adfasdf@email.com',
@@ -41,7 +44,7 @@ describe('Auth', () => {
         MongooseModule.forRootAsync({
           imports: [ConfigModule],
           useFactory: async (configService: ConfigService) => ({
-            uri: configService.get<string>('DATABASE_URI'),
+            uri: configService.get<string>('DATABASE_URI') + '-auth',
           }),
           inject: [ConfigService],
         }),
@@ -50,8 +53,15 @@ describe('Auth', () => {
 
     app = module.createNestApplication();
     userModel = module.get<UserDocument>(getModelToken('User'));
+    authRepository = module.get<AuthRepository>(AuthRepository);
     jwtService = module.get<JwtService>(JwtService);
     await app.init();
+
+    hashedUser = {
+      ...userData,
+      password: await bcrypt.hash(userData.password, 5),
+    };
+    await userModel.create(hashedUser);
   });
 
   afterAll(async () => {
@@ -62,24 +72,51 @@ describe('Auth', () => {
 
   describe('user login', () => {
     it('user should login well', async () => {
-      const hashedUser = {
-        ...userData,
-        password: await bcrypt.hash(userData.password, 5),
-      };
-      await userModel.create(hashedUser);
-      const insertedUser = await userModel.findOne({
-        email: authCredentials.email,
-      });
       const res = await request(app.getHttpServer())
         .post('/auth/login')
         .send(authCredentials)
         .expect(200);
       expect(res.body).toEqual({
-        access_token: jwtService.sign({
-          email: userData.email,
-          sub: insertedUser._id,
-        }),
+        access_token: expect.anything(),
+        refresh_token: expect.anything(),
       });
+    });
+  });
+
+  describe('user refresh', () => {
+    it('user should refresh well', async () => {
+      const refresh_token = (
+        await request(app.getHttpServer())
+          .post('/auth/login')
+          .send(authCredentials)
+          .expect(200)
+      ).body.refresh_token;
+      const res = await request(app.getHttpServer())
+        .post('/auth/refresh')
+        .send({ refresh_token })
+        .expect(200);
+      expect(res.body).toEqual({
+        access_token: expect.anything(),
+        refresh_token: expect.anything(),
+      });
+    });
+  });
+
+  describe('user logout', () => {
+    it('user should logout well', async () => {
+      const refresh_token = (
+        await request(app.getHttpServer())
+          .post('/auth/login')
+          .send(authCredentials)
+          .expect(200)
+      ).body.refresh_token;
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .send({ refresh_token })
+        .expect(204);
+      expect(
+        await authRepository.findToken(jwtService.verify(refresh_token).uuid),
+      ).toBeUndefined();
     });
   });
 });
