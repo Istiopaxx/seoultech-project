@@ -59,7 +59,7 @@ describe('Auth', () => {
 
     hashedUser = {
       ...userData,
-      password: await bcrypt.hash(userData.password, 5),
+      password: await bcrypt.hash(userData.password, 5), // 5 is the saltRounds
     };
     await userModel.create(hashedUser);
   });
@@ -115,8 +115,17 @@ describe('Auth', () => {
         .send({ refresh_token })
         .expect(204);
       expect(
-        await authRepository.findToken(jwtService.verify(refresh_token).uuid),
+        await authRepository.find(jwtService.verify(refresh_token).uuid),
       ).toBeUndefined();
     });
   });
+
+  // describe('send auth email', () => {
+  //   it('auth email should be sent well', async () => {
+  //     const res = await request(app.getHttpServer())
+  //       .post('/auth/send-auth-mail')
+  //       .send({ email: authCredentials.email })
+  //       .expect(204);
+  //   });
+  // });
 });

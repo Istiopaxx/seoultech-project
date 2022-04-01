@@ -6,15 +6,18 @@ import {
   Patch,
   Param,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, CreateUserResponse } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiCreatedResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { JwtCheckGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @ApiTags('User')
 @Controller('user')
@@ -32,6 +35,8 @@ export class UserController {
     description: 'Email duplicated.',
     type: BadRequestException,
   })
+  @ApiBearerAuth()
+  @UseGuards(JwtCheckGuard)
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,

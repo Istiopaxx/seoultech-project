@@ -7,10 +7,12 @@ import { UserDocument } from 'src/user/entities/user.entity';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { AuthModule } from 'src/auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 describe('User', () => {
   let app: INestApplication;
   let userModel;
+  let jwtService;
   const userData: CreateUserDto = {
     first_name: 'John',
     last_name: 'Doe',
@@ -43,6 +45,7 @@ describe('User', () => {
 
     app = module.createNestApplication();
     userModel = module.get<UserDocument>(getModelToken('User'));
+    jwtService = module.get<JwtService>(JwtService);
     await app.init();
   });
 
@@ -54,8 +57,12 @@ describe('User', () => {
 
   describe('user create', () => {
     it('user should created well', async () => {
+      const access_token: string = await jwtService.sign({
+        email: userData.email,
+      });
       const res = await request(app.getHttpServer())
         .post('/user')
+        .set('Authorization', 'Bearer ' + access_token)
         .send(userData)
         .expect(201);
       expect(res.body).toEqual({
@@ -75,8 +82,10 @@ describe('User', () => {
     });
 
     it('user password should be hashed', async () => {
+      const access_token: string = await jwtService.sign({});
       const res = await request(app.getHttpServer())
         .post('/user')
+        .set('Authorization', 'Bearer ' + access_token)
         .send(userData)
         .expect(201);
       const user = await userModel.findById(res.body.user._id);

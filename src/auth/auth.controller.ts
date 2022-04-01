@@ -5,14 +5,17 @@ import {
   UseGuards,
   HttpStatus,
   HttpCode,
+  Body,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { AuthCodeDto, AuthMailDto } from './dto/auth-mail.dto';
 import {
   CreateTokenDto,
   CreateTokenResponse,
@@ -34,6 +37,7 @@ export class AuthController {
     description: 'Login successfully.',
     type: CreateTokenResponse,
   })
+  @ApiBearerAuth()
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('login')
@@ -49,6 +53,7 @@ export class AuthController {
     description: 'Refresh access token successfully.',
     type: CreateTokenResponse,
   })
+  @ApiBearerAuth()
   @UseGuards(RefreshJwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('refresh')
@@ -63,10 +68,37 @@ export class AuthController {
   @ApiNoContentResponse({
     description: 'Logout successfully.',
   })
+  @ApiBearerAuth()
   @UseGuards(RefreshJwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   @Post('logout')
   async logout(@Request() req) {
     return this.authService.logout(req.user);
+  }
+
+  /*
+   * Send authrization email
+   */
+  @ApiBody({ type: AuthMailDto })
+  @ApiOkResponse({
+    description: 'Send mail successfully.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('/send-auth-mail')
+  async sendAuthorizationEmail(@Body() authMailDto: AuthMailDto) {
+    return this.authService.sendAuthorizationEmail(authMailDto);
+  }
+
+  /*
+   * Check authorization code
+   */
+  @ApiBody({ type: AuthCodeDto })
+  @ApiOkResponse({
+    description: 'Validate auth code successfully.',
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post('/check-auth-code')
+  async checkAuthorizationCode(@Body() authCodeDto: AuthCodeDto) {
+    return this.authService.checkAuthorizationCode(authCodeDto);
   }
 }
