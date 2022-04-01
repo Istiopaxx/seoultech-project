@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { ConfigModule } from '@nestjs/config';
 import { AuthRepository } from './auth.repository';
 import { CreateTokenResponse } from './dto/create-token.dto';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -32,8 +33,9 @@ describe('AuthService', () => {
   const MockAuthRepository = {
     provide: AuthRepository,
     useFactory: () => ({
-      saveToken: jest.fn(() => Promise.resolve(null)),
-      deleteToken: jest.fn(() => Promise.resolve(null)),
+      save: jest.fn(() => Promise.resolve(null)),
+      find: jest.fn(() => Promise.resolve(null)),
+      delete: jest.fn(() => Promise.resolve(null)),
     }),
   };
 
@@ -82,7 +84,7 @@ describe('AuthService', () => {
     it('should return valid jwt token', async () => {
       expect(await service.login(user)).toBeTruthy();
       expect(jwtService.sign).toBeCalled();
-      expect(repository.saveToken).toBeCalledWith(
+      expect(repository.save).toBeCalledWith(
         expect.anything(),
         expect.anything(),
         expect.any(Number),
@@ -98,7 +100,7 @@ describe('AuthService', () => {
       expect(
         await service.refresh({ ...user, uuid: expect.anything() }),
       ).toBeTruthy();
-      expect(repository.deleteToken).toBeCalled();
+      expect(repository.delete).toBeCalled();
       expect(service.login).toBeCalled();
     });
   });
@@ -106,7 +108,49 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('should delete refresh token', async () => {
       await service.logout({ ...user, uuid: expect.anything() });
-      expect(repository.deleteToken).toBeCalled();
+      expect(repository.delete).toBeCalled();
+    });
+  });
+
+  describe('sendAuthorizationEmail', () => {
+    it('should send email', async () => {
+      jest.spyOn(service.transporter, 'sendMail').mockResolvedValue(null);
+      await service.sendAuthorizationEmail({ email: user.email });
+      expect(repository.save).toBeCalled();
+    });
+  });
+
+  describe('checkAuthorizationCode', () => {
+    it('should terminate if code matches', async () => {
+      jest.spyOn(service.transporter, 'sendMail').mockResolvedValue(null);
+      await service.sendAuthorizationEmail({ email: user.email });
+      const code = '123456';
+      jest.spyOn(repository, 'find').mockResolvedValue(code);
+      expect(
+        await service.checkAuthorizationCode({ email: user.email, code }),
+      ).toMatchObject({
+        access_token: expect.anything(),
+      });
+    });
+
+    it('should throw error if code not match', async () => {
+      jest.spyOn(service.transporter, 'sendMail').mockResolvedValue(null);
+      await service.sendAuthorizationEmail({ email: user.email });
+      const code = '123456';
+      jest.spyOn(repository, 'find').mockResolvedValue(code);
+      expect(
+        service.checkAuthorizationCode({ email: user.email, code: '111111' }),
+      ).rejects.toThrowError(UnauthorizedException);
+    });
+
+    it('should throw error if code not found', async () => {
+      jest.spyOn(service.transporter, 'sendMail').mockResolvedValue(null);
+      await service.sendAuthorizationEmail({ email: user.email });
+      const code = '123456';
+      jest.spyOn(repository, 'find').mockResolvedValue(null);
+      expect(
+        service.checkAuthorizationCode({ email: user.email, code }),
+      ).rejects.toThrowError(UnauthorizedException);
     });
   });
 });

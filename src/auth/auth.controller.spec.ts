@@ -13,6 +13,8 @@ describe('AuthController', () => {
       login: jest.fn(() => Promise.resolve()),
       refresh: jest.fn(() => Promise.resolve()),
       logout: jest.fn(() => Promise.resolve()),
+      sendAuthorizationEmail: jest.fn(() => Promise.resolve()),
+      checkAuthorizationCode: jest.fn(() => Promise.resolve()),
     }),
   };
 
@@ -46,5 +48,17 @@ describe('AuthController', () => {
     const user = new User();
     await controller.logout({ user, uuid: expect.anything() });
     expect(service.logout).toBeCalledWith(user);
+  });
+
+  it('sendAuthorizationEmail should call service.sendAuthorizationEmail', async () => {
+    const dto = { email: new User().email };
+    await controller.sendAuthorizationEmail(dto);
+    expect(service.sendAuthorizationEmail).toBeCalledWith(dto);
+  });
+
+  it('checkAuthorizationCode should call service.checkAuthorizationCode', async () => {
+    const dto = { email: expect.anything(), code: expect.anything() };
+    await controller.checkAuthorizationCode(dto);
+    expect(service.checkAuthorizationCode).toBeCalledWith(dto);
   });
 });
