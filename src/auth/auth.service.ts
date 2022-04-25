@@ -100,7 +100,7 @@ export class AuthService {
     });
     console.log(info);
     if (info.accepted.length === 0) {
-      throw new BadRequestException('Email not sent');
+      throw new BadRequestException('Email not sent.');
     }
   }
 

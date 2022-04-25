@@ -26,6 +26,13 @@ export class UserController {
 
   /*
    * Create a User
+   *
+   * 전달된 Authrization header를 검사하여 토큰이 유효한지 확인한다.
+   * 이 토큰은 send-auth-mail, check-auth-code를 통해 발급된다.
+   * 이메일이 중복되는지 확인하고, 중복되지 않으면 사용자 생성을 진행한다.
+   * 이메일 중복이면 BadRequestException을 발생시킨다.
+   * 사용자 생성이 성공하면 201 Created를 반환한다.
+   * 동시에 login 작업을 수행하여 access_token과 refresh_token을 발급한다.
    */
   @ApiCreatedResponse({
     description: 'The record has been successfully created.',
