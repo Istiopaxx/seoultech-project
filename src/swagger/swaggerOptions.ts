@@ -11,6 +11,6 @@ export const swaggerDocumentconfig = new DocumentBuilder()
   .setDescription('The API description')
   .setVersion('1.0')
   .addServer('http://localhost:' + process.env.PORT, 'Localhost')
-  .addServer(process.env.HOST + ':' + process.env.PORT, 'server')
+  .addServer(process.env.HOST + '/api', 'server')
   .addBearerAuth()
   .build();
