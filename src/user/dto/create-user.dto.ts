@@ -1,6 +1,6 @@
 import { IsString, IsEmail } from 'class-validator';
 import { CreateTokenResponse } from 'src/auth/dto/create-token.dto';
-
+import { Types } from 'mongoose';
 export class CreateUserDto {
   @IsString()
   first_name: string;
@@ -28,7 +28,7 @@ export class CreateUserDto {
 }
 
 export class CreateUser {
-  _id: string;
+  _id: Types.ObjectId;
 
   first_name: string;
 

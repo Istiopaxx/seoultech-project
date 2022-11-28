@@ -5,7 +5,7 @@ import { SwaggerModule } from '@nestjs/swagger';
 import {
   swaggerDocumentconfig,
   swaggerCustomOptions,
-} from './common/swaggerOptions';
+} from './swagger/swaggerOptions';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
